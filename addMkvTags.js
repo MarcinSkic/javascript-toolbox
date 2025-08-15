@@ -11,6 +11,7 @@ const title = process.argv[3];
 const studio = process.argv[4];
 let season = Number.parseInt(process.argv[5]);
 let episodesOffset = Number.parseInt(process.argv[6]);
+let totalEpisodes = Number.parseInt(process.argv[7]);
 
 let renameConflicts = 0;
 
@@ -22,9 +23,13 @@ if (Number.isNaN(episodesOffset)) {
   episodesOffset = 0;
 }
 
+if (Number.isNaN(totalEpisodes)) {
+  totalEpisodes = null;
+}
+
 if (!directoryPath || !title || !studio) {
   console.error(
-    "Usage: node addMkvTags.js <directory-path> <title> <studio> <season(optionally, defaults to 1)>"
+    "Usage: node addMkvTags.js <directory-path> <title> <studio> <season(optionally, defaults to 1)> <episodesOffset(optionally, defaults to 0)> <totalEpisodes(optionally, by default calculated automatically)>"
   );
   process.exit(1);
 }
@@ -41,6 +46,12 @@ readdir(directoryPath, async (err, files) => {
     console.log("No .mkv files found.");
     return;
   }
+
+  const previousNamesFilePath = join(directoryPath, "prevNames.txt");
+  var fileNames = mkvFiles.reduce((acc, file) => {
+    return `${acc}${file}\n`;
+  }, "");
+  await fs.promises.appendFile(previousNamesFilePath, fileNames);
 
   const operations = mkvFiles.map(async (file, index) => {
     const filePath = join(directoryPath, file);
@@ -116,7 +127,7 @@ async function editStudio(
     </Simple>
     <Simple>
       <Name>TOTAL_PARTS</Name>
-      <String>${filesCount + episodesOffset}</String>
+      <String>${totalEpisodes ?? filesCount + episodesOffset}</String>
     </Simple>
   </Tag>
 </Tags>
