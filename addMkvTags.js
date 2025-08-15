@@ -10,9 +10,16 @@ const directoryPath = process.argv[2];
 const title = process.argv[3];
 const studio = process.argv[4];
 let season = Number.parseInt(process.argv[5]);
+let episodesOffset = Number.parseInt(process.argv[6]);
+
+let renameConflicts = 0;
 
 if (Number.isNaN(season)) {
   season = 1;
+}
+
+if (Number.isNaN(episodesOffset)) {
+  episodesOffset = 0;
 }
 
 if (!directoryPath || !title || !studio) {
@@ -37,8 +44,9 @@ readdir(directoryPath, async (err, files) => {
 
   const operations = mkvFiles.map(async (file, index) => {
     const filePath = join(directoryPath, file);
+    const offsetIndex = index + episodesOffset;
 
-    const paddedEpisodeCount = String(index + 1).padStart(3, "0");
+    const paddedEpisodeCount = String(offsetIndex + 1).padStart(3, "0");
     const fullTitle = `${title} S0${season}E${paddedEpisodeCount}`;
 
     const editTitleCommand = `mkvpropedit "${filePath}" --edit info --set "title=${fullTitle}"`;
@@ -46,7 +54,7 @@ readdir(directoryPath, async (err, files) => {
 
     await editStudio(
       studio,
-      index,
+      offsetIndex,
       mkvFiles.length,
       directoryPath,
       filePath,
@@ -55,6 +63,17 @@ readdir(directoryPath, async (err, files) => {
 
     const newFileName = `${fullTitle}.mkv`;
     const newFilePath = join(directoryPath, newFileName);
+
+    if (mkvFiles.some((file) => file === newFileName)) {
+      if (file !== newFileName) {
+        console.warn(
+          `Couldn't rename ${file}, there already exists file with target name ${newFileName}`
+        );
+        renameConflicts++;
+      }
+
+      return;
+    }
 
     await fs.promises.rename(filePath, newFilePath, (renameErr) => {
       if (renameErr) {
@@ -66,6 +85,12 @@ readdir(directoryPath, async (err, files) => {
   });
 
   await Promise.all(operations);
+
+  if (renameConflicts !== 0) {
+    console.warn(
+      `Rename conflicts occurred (${renameConflicts})! If you used episodesOffset try running script a couple times, conflicts should decrease to 0`
+    );
+  }
 });
 
 async function editStudio(
@@ -91,7 +116,7 @@ async function editStudio(
     </Simple>
     <Simple>
       <Name>TOTAL_PARTS</Name>
-      <String>${filesCount}</String>
+      <String>${filesCount + episodesOffset}</String>
     </Simple>
   </Tag>
 </Tags>
