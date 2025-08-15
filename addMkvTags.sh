@@ -1,0 +1,6 @@
+DIRECTORY="$1"
+TITLE="$2"
+STUDIO="$3"
+SEASON="$4"
+
+node addMkvTags.js "$DIRECTORY" "$TITLE" "$STUDIO" "$SEASON"

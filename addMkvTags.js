@@ -9,9 +9,13 @@ const exec = promisify(execCallback);
 const directoryPath = process.argv[2];
 const title = process.argv[3];
 const studio = process.argv[4];
-const season = Number.parseInt(process.argv[5] ?? 1);
+let season = Number.parseInt(process.argv[5]);
 
-if (!directoryPath || !title || !studio || !season || Number.isNaN(season)) {
+if (Number.isNaN(season)) {
+  season = 1;
+}
+
+if (!directoryPath || !title || !studio) {
   console.error(
     "Usage: node addMkvTags.js <directory-path> <title> <studio> <season(optionally, defaults to 1)>"
   );
@@ -96,7 +100,7 @@ async function editStudio(
   const tagsFilePath = join(directoryPath, `tags${index}.xml`);
   await fs.promises.writeFile(tagsFilePath, xmlContent, "utf8");
 
-  const setTagsCommand = `mkvpropedit "${filePath}" --tags global:${tagsFilePath}`;
+  const setTagsCommand = `mkvpropedit "${filePath}" --tags global:"${tagsFilePath}"`;
   await execCommand(setTagsCommand, file, "Updated artist for");
 
   await fs.promises.unlink(tagsFilePath, (unlinkErr) => {
