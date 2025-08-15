@@ -55,9 +55,12 @@ readdir(directoryPath, async (err, files) => {
 
   const operations = mkvFiles.map(async (file, index) => {
     const filePath = join(directoryPath, file);
-    const offsetIndex = index + episodesOffset;
+    const offsetIndex = index + episodesOffset + 1;
 
-    const paddedEpisodeCount = String(offsetIndex + 1).padStart(3, "0");
+    const paddedEpisodeCount = String(offsetIndex).padStart(
+      mkvFiles.length > 99 ? 3 : 2,
+      "0"
+    );
     const fullTitle = `${title} S0${season}E${paddedEpisodeCount}`;
 
     const editTitleCommand = `mkvpropedit "${filePath}" --edit info --set "title=${fullTitle}"`;
@@ -123,7 +126,7 @@ async function editStudio(
     </Simple>
     <Simple>
       <Name>PART_NUMBER</Name>
-      <String>${index + 1}</String>
+      <String>${index}</String>
     </Simple>
     <Simple>
       <Name>TOTAL_PARTS</Name>
